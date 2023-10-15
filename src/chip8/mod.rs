@@ -1,3 +1,6 @@
+pub const WIDTH: u32 = 64;
+pub const HEIGHT: u32 = 32;
+
 pub struct Chip8 {
     memory: [u8; 4096],
     // program counter
@@ -9,8 +12,8 @@ pub struct Chip8 {
     registers: [u8; 16],
 }
 
-pub impl Chip8 {
-    fn load_rom(rom: &[u8]) {
+impl Chip8 {
+    pub fn load_rom(rom: &[u8]) {
         todo!()
     }
 }
