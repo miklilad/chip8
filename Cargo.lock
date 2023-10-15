@@ -504,6 +504,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-loop"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70bb1e77782202c6936f53fe0db73db074f194486934b795b1b5495c1d9c1f50"
+dependencies = [
+ "wasm-bindgen",
+ "web-sys",
+ "winit",
+]
+
+[[package]]
 name = "gimli"
 version = "0.27.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2048,6 +2059,7 @@ dependencies = [
 name = "trunk-template"
 version = "0.1.0"
 dependencies = [
+ "game-loop",
  "gloo 0.10.0",
  "pixels",
  "serde",
