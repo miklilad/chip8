@@ -1,13 +1,10 @@
 mod app;
 mod chip8;
 
-use std::{
-    sync::Arc,
-    time::{Instant, SystemTime, UNIX_EPOCH},
-};
+use std::{sync::Arc, time::Instant};
 
 use chip8::{HEIGHT, WIDTH};
-use pixels::{wgpu::Instance, Pixels, SurfaceTexture};
+use pixels::{Pixels, SurfaceTexture};
 use winit::{
     dpi::PhysicalSize,
     event::VirtualKeyCode,
@@ -30,84 +27,125 @@ fn main() {
     let surface_texture = SurfaceTexture::new(size.width, size.height, &window);
     let mut pixels = Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap();
 
-    // pixels.clear_color(Color::RED);
+    let start_instant = Instant::now();
+    // let game = (input, pixels, Instant::now());
 
-    // for pixel in pixels.frame_mut() {
-    //     *pixel = 0xFF;
-    // }
+    // game_loop::game_loop(
+    //     event_loop,
+    //     Arc::new(window),
+    //     game,
+    //     2,
+    //     0.1,
+    //     |gg| {
+    //         let pixels = &mut gg.game.1;
+    //         for pixel in pixels.frame_mut().chunks_exact_mut(4) {
+    //             if let [r, g, b, a] = pixel {
+    //                 *r = Instant::now()
+    //                     .duration_since(gg.game.2)
+    //                     .subsec_nanos()
+    //                     .to_be_bytes()
+    //                     .last()
+    //                     .unwrap()
+    //                     .to_owned();
+    //                 *g = Instant::now()
+    //                     .duration_since(gg.game.2)
+    //                     .subsec_nanos()
+    //                     .to_be_bytes()
+    //                     .last()
+    //                     .unwrap()
+    //                     .to_owned();
+    //                 *b = Instant::now()
+    //                     .duration_since(gg.game.2)
+    //                     .subsec_nanos()
+    //                     .to_be_bytes()
+    //                     .last()
+    //                     .unwrap()
+    //                     .to_owned();
+    //                 *a = 0xFF;
+    //             }
+    //         }
+    //     },
+    //     |g| {
+    //         g.game.1.render().unwrap();
+    //     },
+    //     |g, event| {
+    //         let input = &mut g.game.0;
+    //         if input.update(&event) {
+    //             if input.close_requested() || input.key_pressed(VirtualKeyCode::Escape) {
+    //                 g.exit();
+    //             }
+    //         }
+    //     },
+    // )
 
-    let game = (input, pixels, Instant::now());
+    let mut last_redraw_instant = Instant::now();
 
-    game_loop::game_loop(
-        event_loop,
-        Arc::new(window),
-        game,
-        60,
-        0.1,
-        |gg| {
-            println!("Update called");
-            let pixels = &mut gg.game.1;
-            for pixel in pixels.frame_mut().chunks_exact_mut(4) {
-                if let [r, g, b, a] = pixel {
-                    *r = Instant::now()
-                        .duration_since(gg.game.2)
-                        .subsec_nanos()
-                        .to_be_bytes()
-                        .last()
-                        .unwrap()
-                        .to_owned();
-                    *g = Instant::now()
-                        .duration_since(gg.game.2)
-                        .subsec_nanos()
-                        .to_be_bytes()
-                        .last()
-                        .unwrap()
-                        .to_owned();
-                    *b = Instant::now()
-                        .duration_since(gg.game.2)
-                        .subsec_nanos()
-                        .to_be_bytes()
-                        .last()
-                        .unwrap()
-                        .to_owned();
-                    *a = 0xFF;
-                }
+    event_loop.run(move |event, _, control_flow| {
+        if input.update(&event) {
+            if input.close_requested()
+                || input.key_pressed(VirtualKeyCode::Escape)
+                || input.key_pressed(VirtualKeyCode::Q)
+            {
+                control_flow.set_exit();
             }
-        },
-        |g| {
-            println!("Render called");
-            g.game.1.render().unwrap();
-        },
-        |g, event| {},
-    )
 
-    // event_loop.run(move |event, _, control_flow| {
-    //     println!("{i}");
-    //     control_flow.set_wait();
-    //     if input.update(&event) {
-    //         if input.close_requested() || input.key_pressed(VirtualKeyCode::Escape) {
-    //             *control_flow = ControlFlow::Exit;
-    //         }
-    //     }
-    //     for pixel in pixels.frame_mut().chunks_exact_mut(4) {
-    //         if let [r, g, b, a] = pixel {
-    //             *r = i.try_into().unwrap();
-    //             *g = i.try_into().unwrap();
-    //             *b = i.try_into().unwrap();
-    //             *a = 0xFF;
-    //         }
-    //     }
-    //     i = (i + 1) % 255;
+            if input.key_pressed(VirtualKeyCode::Space) {
+                window.request_redraw();
+            }
+        }
 
-    //     if let Some(size) = input.window_resized() {
-    //         pixels.resize_surface(size.width, size.height).unwrap();
-    //     }
+        match event {
+            winit::event::Event::RedrawRequested(_) => {
+                for pixel in pixels.frame_mut().chunks_exact_mut(4) {
+                    if let [r, g, b, a] = pixel {
+                        *r = Instant::now()
+                            .duration_since(start_instant)
+                            .subsec_nanos()
+                            .to_be_bytes()
+                            .last()
+                            .unwrap()
+                            .to_owned();
+                        *g = Instant::now()
+                            .duration_since(start_instant)
+                            .subsec_nanos()
+                            .to_be_bytes()
+                            .last()
+                            .unwrap()
+                            .to_owned();
+                        *b = Instant::now()
+                            .duration_since(start_instant)
+                            .subsec_nanos()
+                            .to_be_bytes()
+                            .last()
+                            .unwrap()
+                            .to_owned();
+                        *a = 0xFF;
+                    }
+                }
+                pixels.render().unwrap();
+            }
+            _ => {}
+        }
 
-    //     pixels.render().unwrap();
-    //     // pixels.render().unwrap();
+        // println!("{:?}", event);
+        if Instant::now()
+            .duration_since(last_redraw_instant)
+            .as_millis()
+            > 1000
+        {
+            window.request_redraw();
+            last_redraw_instant = Instant::now();
+        }
 
-    //     // *control_flow = ControlFlow::Exit;
-    // })
+        // if let Some(size) = input.window_resized() {
+        //     pixels.resize_surface(size.width, size.height).unwrap();
+        // }
+
+        // pixels.render().unwrap();
+        // pixels.render().unwrap();
+
+        // *control_flow = ControlFlow::Exit;
+    });
 
     // let bytes = include_bytes!("../data/2-ibm-logo.ch8");
     // println!("{:x?}", bytes);

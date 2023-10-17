@@ -13,7 +13,15 @@ pub struct Chip8 {
 }
 
 impl Chip8 {
-    pub fn load_rom(rom: &[u8]) {
-        todo!()
+    pub fn new(rom: &[u8]) -> Self {
+        todo!();
+        // Self {
+        //     memory: (),
+        //     pc: (),
+        //     i: (),
+        //     delay_timer: (),
+        //     stack: (),
+        //     registers: (),
+        // }
     }
 }
