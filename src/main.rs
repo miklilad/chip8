@@ -1,17 +1,15 @@
 mod app;
 mod chip8;
 
-use std::{sync::Arc, time::Instant};
+use std::time::Instant;
 
-use chip8::{HEIGHT, WIDTH};
 use pixels::{Pixels, SurfaceTexture};
 use winit::{
-    dpi::PhysicalSize,
-    event::VirtualKeyCode,
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    dpi::PhysicalSize, event::VirtualKeyCode, event_loop::EventLoop, window::WindowBuilder,
 };
 use winit_input_helper::WinitInputHelper;
+
+use crate::chip8::{Chip8, HEIGHT, WIDTH};
 
 fn main() {
     let event_loop = EventLoop::new();
@@ -27,58 +25,13 @@ fn main() {
     let surface_texture = SurfaceTexture::new(size.width, size.height, &window);
     let mut pixels = Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap();
 
-    let start_instant = Instant::now();
-    // let game = (input, pixels, Instant::now());
-
-    // game_loop::game_loop(
-    //     event_loop,
-    //     Arc::new(window),
-    //     game,
-    //     2,
-    //     0.1,
-    //     |gg| {
-    //         let pixels = &mut gg.game.1;
-    //         for pixel in pixels.frame_mut().chunks_exact_mut(4) {
-    //             if let [r, g, b, a] = pixel {
-    //                 *r = Instant::now()
-    //                     .duration_since(gg.game.2)
-    //                     .subsec_nanos()
-    //                     .to_be_bytes()
-    //                     .last()
-    //                     .unwrap()
-    //                     .to_owned();
-    //                 *g = Instant::now()
-    //                     .duration_since(gg.game.2)
-    //                     .subsec_nanos()
-    //                     .to_be_bytes()
-    //                     .last()
-    //                     .unwrap()
-    //                     .to_owned();
-    //                 *b = Instant::now()
-    //                     .duration_since(gg.game.2)
-    //                     .subsec_nanos()
-    //                     .to_be_bytes()
-    //                     .last()
-    //                     .unwrap()
-    //                     .to_owned();
-    //                 *a = 0xFF;
-    //             }
-    //         }
-    //     },
-    //     |g| {
-    //         g.game.1.render().unwrap();
-    //     },
-    //     |g, event| {
-    //         let input = &mut g.game.0;
-    //         if input.update(&event) {
-    //             if input.close_requested() || input.key_pressed(VirtualKeyCode::Escape) {
-    //                 g.exit();
-    //             }
-    //         }
-    //     },
-    // )
-
     let mut last_redraw_instant = Instant::now();
+
+    const UPS: u32 = 7;
+    let time_step = 1.0 / (UPS as f64);
+
+    let rom = include_bytes!("../data/2-ibm-logo.ch8");
+    let chip8 = Chip8::new(rom);
 
     event_loop.run(move |event, _, control_flow| {
         if input.update(&event) {
@@ -99,21 +52,21 @@ fn main() {
                 for pixel in pixels.frame_mut().chunks_exact_mut(4) {
                     if let [r, g, b, a] = pixel {
                         *r = Instant::now()
-                            .duration_since(start_instant)
+                            .duration_since(last_redraw_instant)
                             .subsec_nanos()
                             .to_be_bytes()
                             .last()
                             .unwrap()
                             .to_owned();
                         *g = Instant::now()
-                            .duration_since(start_instant)
+                            .duration_since(last_redraw_instant)
                             .subsec_nanos()
                             .to_be_bytes()
                             .last()
                             .unwrap()
                             .to_owned();
                         *b = Instant::now()
-                            .duration_since(start_instant)
+                            .duration_since(last_redraw_instant)
                             .subsec_nanos()
                             .to_be_bytes()
                             .last()
@@ -130,10 +83,11 @@ fn main() {
         // println!("{:?}", event);
         if Instant::now()
             .duration_since(last_redraw_instant)
-            .as_millis()
-            > 1000
+            .as_secs_f64()
+            > time_step
         {
-            window.request_redraw();
+            // window.request_redraw();
+            chip8.step();
             last_redraw_instant = Instant::now();
         }
 
