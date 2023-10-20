@@ -14,7 +14,7 @@ use crate::chip8::{Chip8, HEIGHT, WIDTH};
 fn main() {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
-        .with_inner_size(PhysicalSize::new(WIDTH * 10, HEIGHT * 10))
+        .with_inner_size(PhysicalSize::new(WIDTH as u32 * 10, HEIGHT as u32 * 10))
         .with_title("Chip8")
         .build(&event_loop)
         .unwrap();
@@ -23,15 +23,16 @@ fn main() {
 
     let size = window.inner_size();
     let surface_texture = SurfaceTexture::new(size.width, size.height, &window);
-    let mut pixels = Pixels::new(WIDTH, HEIGHT, surface_texture).unwrap();
+    let mut pixels = Pixels::new(WIDTH as u32, HEIGHT as u32, surface_texture).unwrap();
 
     let mut last_redraw_instant = Instant::now();
 
     const UPS: u32 = 7;
     let time_step = 1.0 / (UPS as f64);
 
-    let rom = include_bytes!("../data/2-ibm-logo.ch8");
-    let chip8 = Chip8::new(rom);
+    let rom = include_bytes!("../data/IBM_Logo.ch8");
+
+    let mut chip8 = Chip8::new(rom);
 
     event_loop.run(move |event, _, control_flow| {
         if input.update(&event) {
@@ -49,30 +50,13 @@ fn main() {
 
         match event {
             winit::event::Event::RedrawRequested(_) => {
-                for pixel in pixels.frame_mut().chunks_exact_mut(4) {
+                let display = chip8.display.concat();
+                for (i, pixel) in pixels.frame_mut().chunks_exact_mut(4).enumerate() {
                     if let [r, g, b, a] = pixel {
-                        *r = Instant::now()
-                            .duration_since(last_redraw_instant)
-                            .subsec_nanos()
-                            .to_be_bytes()
-                            .last()
-                            .unwrap()
-                            .to_owned();
-                        *g = Instant::now()
-                            .duration_since(last_redraw_instant)
-                            .subsec_nanos()
-                            .to_be_bytes()
-                            .last()
-                            .unwrap()
-                            .to_owned();
-                        *b = Instant::now()
-                            .duration_since(last_redraw_instant)
-                            .subsec_nanos()
-                            .to_be_bytes()
-                            .last()
-                            .unwrap()
-                            .to_owned();
-                        *a = 0xFF;
+                        *r = 0xFF * (display[i] & 1);
+                        *g = 0xFF * (display[i] & 1);
+                        *b = 0xFF * (display[i] & 1);
+                        *a = 0xFF * (display[i] & 1);
                     }
                 }
                 pixels.render().unwrap();
@@ -87,7 +71,9 @@ fn main() {
             > time_step
         {
             // window.request_redraw();
-            chip8.step();
+            if chip8.step() {
+                window.request_redraw();
+            }
             last_redraw_instant = Instant::now();
         }
 
