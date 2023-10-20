@@ -6,7 +6,7 @@ pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
 
 pub struct Chip8 {
-    pub display: [[u8; HEIGHT]; WIDTH],
+    pub display: [[u8; WIDTH]; HEIGHT],
 
     memory: [u8; 4096],
     // program counter
@@ -52,7 +52,7 @@ impl Chip8 {
         });
 
         Self {
-            display: [[0; HEIGHT]; WIDTH],
+            display: [[0; WIDTH]; HEIGHT],
 
             memory,
             pc: 0x200,
@@ -75,7 +75,7 @@ impl Chip8 {
      * Clear screen
      */
     fn f00e0(&mut self) {
-        self.display = [[0; HEIGHT]; WIDTH];
+        self.display = [[0; WIDTH]; HEIGHT];
     }
 
     /**
@@ -107,6 +107,9 @@ impl Chip8 {
         self.i = nnn;
     }
 
+    /**
+     * Display / draw
+     */
     fn fdxyn(&mut self, x_register: u16, y_register: u16, n: u8) {
         let x_coord_from = (self.v[x_register as usize] as usize) % WIDTH;
         let y_coord_from = (self.v[y_register as usize] as usize) % HEIGHT;
@@ -117,12 +120,12 @@ impl Chip8 {
             let nth_sprite_byte = self.memory[self.i as usize + nth_row];
             let sprite_mask: u8 = 0x80;
             for (i, x_coord) in (x_coord_from..x_coord_to).enumerate() {
-                let sprite_pixel = nth_sprite_byte & (sprite_mask >> i) >> (7 - i);
-                let new_pixel = self.display[x_coord][y_coord] ^ sprite_pixel;
-                if (self.display[x_coord][y_coord] & sprite_pixel >= 1) {
+                let sprite_pixel = (nth_sprite_byte & (sprite_mask >> i)) >> (7 - i);
+                let new_pixel = self.display[y_coord][x_coord] ^ sprite_pixel;
+                if (self.display[y_coord][x_coord] & sprite_pixel >= 1) {
                     self.v[0xf] = 1;
                 }
-                self.display[x_coord][y_coord] = new_pixel;
+                self.display[y_coord][x_coord] = new_pixel;
             }
         }
     }

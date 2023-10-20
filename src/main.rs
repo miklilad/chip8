@@ -30,8 +30,7 @@ fn main() {
     const UPS: u32 = 7;
     let time_step = 1.0 / (UPS as f64);
 
-    let rom = include_bytes!("../data/2-ibm-logo.ch8");
-    // let rom = include_bytes!("../data/IBM Logo.ch8");
+    let rom = include_bytes!("../data/IBM_Logo.ch8");
 
     let mut chip8 = Chip8::new(rom);
 
