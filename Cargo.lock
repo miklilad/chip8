@@ -253,6 +253,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
+name = "chip8"
+version = "0.1.0"
+dependencies = [
+ "game-loop",
+ "gloo 0.10.0",
+ "pixels",
+ "rand",
+ "serde",
+ "serde_json",
+ "stylist",
+ "wasm-bindgen",
+ "web-sys",
+ "winit",
+ "winit_input_helper",
+ "yew",
+]
+
+[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2100,24 +2118,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24eb03ba0eab1fd845050058ce5e616558e8f8d8fca633e6b163fe25c797213a"
 dependencies = [
  "once_cell",
-]
-
-[[package]]
-name = "trunk-template"
-version = "0.1.0"
-dependencies = [
- "game-loop",
- "gloo 0.10.0",
- "pixels",
- "rand",
- "serde",
- "serde_json",
- "stylist",
- "wasm-bindgen",
- "web-sys",
- "winit",
- "winit_input_helper",
- "yew",
 ]
 
 [[package]]

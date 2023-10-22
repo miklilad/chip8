@@ -1,4 +1,3 @@
-mod app;
 mod chip8;
 
 use std::time::Instant;
@@ -90,7 +89,3 @@ fn main() {
     // let bytes = include_bytes!("../data/2-ibm-logo.ch8");
     // println!("{:x?}", bytes);
 }
-
-// fn main() {
-//     yew::Renderer::<App>::new().render();
-// }
