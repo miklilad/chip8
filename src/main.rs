@@ -27,12 +27,12 @@ fn main() {
 
     let mut last_redraw_instant = Instant::now();
 
-    const UPS: u32 = 7;
+    const UPS: u32 = 700;
     let time_step = 1.0 / (UPS as f64);
 
-    let rom = include_bytes!("../data/IBM_Logo.ch8");
+    let rom = include_bytes!("../data/test_opcode.ch8");
 
-    let mut chip8 = Chip8::new(rom);
+    let mut chip8 = Chip8::new(rom, chip8::Chip8Implementation::Chip48);
 
     event_loop.run(move |event, _, control_flow| {
         if input.update(&event) {
