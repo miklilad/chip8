@@ -8,7 +8,7 @@ pub const HEIGHT: usize = 32;
 
 pub enum Chip8Implementation {
     CosmacVip,
-    Chip48,
+    Modern,
 }
 
 pub struct Chip8 {
@@ -183,18 +183,11 @@ impl Chip8 {
     /// However, starting with CHIP-48 and SUPER-CHIP in the early 1990s,
     /// these instructions were changed so that they shifted VX in place, and ignored the Y completely.
     fn f8xy6(&mut self, x: u16, y: u16) {
-        match self.implementation {
-            Chip8Implementation::CosmacVip => self.f8xy6Cosmac(x, y),
-            Chip8Implementation::Chip48 => self.f8xy6Chip48(x, y),
+        if let Chip8Implementation::CosmacVip = self.implementation {
+            self.v[x as usize] = self.v[y as usize];
         }
-    }
-
-    fn f8xy6Cosmac(&mut self, x: u16, y: u16) {
-        
-    }
-
-    fn f8xy6Chip48(&mut self, x: u16, y: u16) {
-
+        self.v[0xf] = self.v[x as usize] & 0x1;
+        self.v[x as usize] = self.v[x as usize].wrapping_shr(1);
     }
 
     /// Sets VX to the result of VY - VX. Carry flag is set to 0 if the result underflows, else to 1.
@@ -208,7 +201,13 @@ impl Chip8 {
     }
 
     /// Bit shift to the left. Ambiguous: https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#8xy6-and-8xye-shift
-    fn f8xye(&mut self, x: u16, y: u16) {}
+    fn f8xye(&mut self, x: u16, y: u16) {
+        if let Chip8Implementation::CosmacVip = self.implementation {
+            self.v[x as usize] = self.v[y as usize];
+        }
+        self.v[0xf] = self.v[x as usize] & 0x80;
+        self.v[x as usize] = self.v[x as usize].wrapping_shl(1);
+    }
 
     /// Skips one instruction if the value of VX is NOT equal to the value of VY.
     fn f9xy0(&mut self, x: u16, y: u16) {
@@ -225,7 +224,9 @@ impl Chip8 {
     /// Jump with offset. Jumps to the address NNN plus the value in the register V0.
     ///
     /// Ambiguous instruction! https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#bnnn-jump-with-offset
-    fn fbnnn(&mut self, nnn: u16) {}
+    fn fbnnn(&mut self, nnn: u16) {
+        
+    }
 
     /// Generates a random number, binary ANDs it with the value NN, and puts the result in VX.
     fn fcxnn(&mut self, x: u16, nn: u8) {
