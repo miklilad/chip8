@@ -31,7 +31,7 @@ fn main() {
 
     let rom = include_bytes!("../data/test_opcode.ch8");
 
-    let mut chip8 = Chip8::new(rom, chip8::Chip8Implementation::Chip48);
+    let mut chip8 = Chip8::new(rom, chip8::Chip8Implementation::Modern);
 
     event_loop.run(move |event, _, control_flow| {
         if input.update(&event) {
