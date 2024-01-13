@@ -225,7 +225,13 @@ impl Chip8 {
     ///
     /// Ambiguous instruction! https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#bnnn-jump-with-offset
     fn fbnnn(&mut self, nnn: u16) {
-        
+        let x = (nnn & 0x0F00) >> 8;
+        let plus: u16 = match self.implementation {
+            Chip8Implementation::CosmacVip => self.v[0],
+            Chip8Implementation::Modern => self.v[x as usize],
+        }
+        .into();
+        self.pc = nnn + plus;
     }
 
     /// Generates a random number, binary ANDs it with the value NN, and puts the result in VX.
@@ -359,6 +365,9 @@ impl Chip8 {
             0xF => match nn {
                 0x07 => self.ffx07(x),
                 0x0a => self.ffx0a(x),
+                0x15 => self.ffx15(x),
+                0x18 => self.ffx18(x),
+                0x1e => self.ffx1e(x),
                 0x29 => self.ffx29(x),
                 0x33 => self.ffx33(x),
                 0x55 => self.ffx55(x),
