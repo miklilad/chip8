@@ -286,10 +286,20 @@ impl Chip8 {
     }
 
     /// Skips one instruction (increment PC by 2) if the key corresponding to the value in VX is pressed.
-    fn fex95(&mut self, x: u16) {}
+    fn fex95(&mut self, x: u16) {
+        let vx = self.v[x as usize];
+        if self.keys_pressed[vx as usize] {
+            self.pc += 2;
+        }
+    }
 
     /// Skips one instruction (increment PC by 2) if the key corresponding to the value in VX is NOT pressed.
-    fn fexa1(&mut self, x: u16) {}
+    fn fexa1(&mut self, x: u16) {
+        let vx = self.v[x as usize];
+        if !self.keys_pressed[vx as usize] {
+            self.pc += 2;
+        }
+    }
 
     /// Sets VX to the current value of the delay timer
     fn ffx07(&mut self, x: u16) {
