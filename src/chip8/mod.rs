@@ -6,6 +6,7 @@ use winit::event::{ScanCode, VirtualKeyCode};
 
 pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
+pub const FONT_ADDRESS: usize = 0x050;
 
 pub enum Chip8Implementation {
     CosmacVip,
@@ -73,7 +74,7 @@ impl Chip8 {
         let mut memory: [u8; 4096] = [0; 4096];
 
         FONT.iter().enumerate().for_each(|(i, byte)| {
-            memory[i + 0x050] = *byte;
+            memory[i + FONT_ADDRESS] = *byte;
         });
 
         rom.iter().enumerate().for_each(|(i, byte)| {
@@ -324,23 +325,47 @@ impl Chip8 {
 
     /// This instruction “blocks”; it stops executing instructions
     /// and waits for key input (or loops forever, unless a key is pressed).
-    fn ffx0a(&mut self, x: u16) {}
+    fn ffx0a(&mut self, x: u16) {
+        let pressed_key = self.keys_pressed.iter().enumerate().find(|(_, val)| **val);
+        match pressed_key {
+            None => self.pc -= 2,
+            Some((key_index, _)) => self.v[x as usize] = key_index as u8,
+        }
+    }
 
     /// The index register I is set to the address of the hexadecimal character in VX
-    fn ffx29(&mut self, x: u16) {}
+    fn ffx29(&mut self, x: u16) {
+        let x = x & 0x0F;
+        self.i = FONT_ADDRESS as u16 + x * 5;
+    }
 
     /// Binary-coded decimal conversion. https://tobiasvl.github.io/blog/write-a-chip-8-emulator/#fx33-binary-coded-decimal-conversion
-    fn ffx33(&mut self, x: u16) {}
+    fn ffx33(&mut self, x: u16) {
+        let number = self.v[x as usize];
+        self.memory[self.i as usize] = number / 100;
+        let number = number % 100;
+        self.memory[self.i as usize + 1] = number / 10;
+        let number = number % 10;
+        self.memory[self.i as usize + 2] = number;
+    }
 
     /// The value of each variable register from V0 to VX inclusive (if X is 0, then only V0)
     /// will be stored in successive memory addresses, starting with the one that’s stored in I.
     /// V0 will be stored at the address in I, V1 will be stored in I + 1,
     /// and so on, until VX is stored in I + X
-    fn ffx55(&mut self, x: u16) {}
+    fn ffx55(&mut self, x: u16) {
+        for i in 0..x {
+            self.memory[i as usize] = self.v[i as usize];
+        }
+    }
 
     /// Same as FX65, except that it takes the value stored at the memory addresses
     /// and loads them into the variable registers instead.
-    fn ffx65(&mut self, x: u16) {}
+    fn ffx65(&mut self, x: u16) {
+        for i in 0..x {
+            self.v[i as usize] = self.memory[i as usize];
+        }
+    }
 
     fn decode(&mut self, instruction: u16) -> bool {
         let micro_instruction = (instruction & 0xF000) >> 12;
