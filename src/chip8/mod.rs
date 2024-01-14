@@ -2,6 +2,7 @@ mod stack;
 
 use stack::Stack;
 use std::cmp;
+use winit::event::{ScanCode, VirtualKeyCode};
 
 pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
@@ -13,6 +14,8 @@ pub enum Chip8Implementation {
 
 pub struct Chip8 {
     pub display: [[u8; WIDTH]; HEIGHT],
+    pub key_mapping: [ScanCode; 16],
+    pub keys_pressed: [bool; 16],
 
     memory: [u8; 4096],
     // program counter
@@ -48,6 +51,25 @@ impl Chip8 {
             0xF0, 0x80, 0xF0, 0x80, 0x80, // F
         ];
 
+        let key_mapping = [
+            2,  // VirtualKeyCode::Key1,
+            3,  // VirtualKeyCode::Key2,
+            4,  // VirtualKeyCode::Key3,
+            5,  // VirtualKeyCode::Key4,
+            16, // VirtualKeyCode::Q,
+            17, // VirtualKeyCode::W
+            18, // VirtualKeyCode::E,
+            19, // VirtualKeyCode::R,
+            30, // VirtualKeyCode::A,
+            31, // VirtualKeyCode::S,
+            32, // VirtualKeyCode::D,
+            33, // VirtualKeyCode::F,
+            44, // VirtualKeyCode::Z,
+            45, // VirtualKeyCode::X,
+            46, // VirtualKeyCode::C,
+            47, // VirtualKeyCode::V,
+        ];
+
         let mut memory: [u8; 4096] = [0; 4096];
 
         FONT.iter().enumerate().for_each(|(i, byte)| {
@@ -60,6 +82,7 @@ impl Chip8 {
 
         Self {
             display: [[0; WIDTH]; HEIGHT],
+            keys_pressed: [false; 16],
 
             memory,
             pc: 0x200,
@@ -69,6 +92,7 @@ impl Chip8 {
             stack: Stack::new(),
             v: [0; 16],
             implementation,
+            key_mapping,
         }
     }
 

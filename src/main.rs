@@ -4,7 +4,10 @@ use std::time::Instant;
 
 use pixels::{Pixels, SurfaceTexture};
 use winit::{
-    dpi::PhysicalSize, event::VirtualKeyCode, event_loop::EventLoop, window::WindowBuilder,
+    dpi::PhysicalSize,
+    event::{ElementState, Event, VirtualKeyCode, WindowEvent},
+    event_loop::EventLoop,
+    window::WindowBuilder,
 };
 use winit_input_helper::WinitInputHelper;
 
@@ -26,29 +29,16 @@ fn main() {
 
     let mut last_redraw_instant = Instant::now();
 
-    const UPS: u32 = 700;
+    const UPS: u32 = 10;
     let time_step = 1.0 / (UPS as f64);
 
-    let rom = include_bytes!("../data/test_opcode.ch8");
+    let rom = include_bytes!("../data/IBM_Logo.ch8");
 
     let mut chip8 = Chip8::new(rom, chip8::Chip8Implementation::Modern);
 
     event_loop.run(move |event, _, control_flow| {
-        if input.update(&event) {
-            if input.close_requested()
-                || input.key_pressed(VirtualKeyCode::Escape)
-                || input.key_pressed(VirtualKeyCode::Q)
-            {
-                control_flow.set_exit();
-            }
-
-            if input.key_pressed(VirtualKeyCode::Space) {
-                window.request_redraw();
-            }
-        }
-
         match event {
-            winit::event::Event::RedrawRequested(_) => {
+            Event::RedrawRequested(_) => {
                 let display = chip8.display.concat();
                 for (i, pixel) in pixels.frame_mut().chunks_exact_mut(4).enumerate() {
                     if let [r, g, b, a] = pixel {
@@ -60,10 +50,36 @@ fn main() {
                 }
                 pixels.render().unwrap();
             }
+            Event::WindowEvent { event, .. } => match event {
+                WindowEvent::CloseRequested => control_flow.set_exit(),
+                WindowEvent::KeyboardInput { input, .. } => {
+                    for (i, scancode) in chip8.key_mapping.iter().enumerate() {
+                        if input.scancode != *scancode {
+                            continue;
+                        }
+                        match input.state {
+                            ElementState::Pressed => {
+                                chip8.keys_pressed[i] = true;
+                            }
+                            ElementState::Released => {
+                                chip8.keys_pressed[i] = false;
+                            }
+                        }
+                    }
+                    if input.virtual_keycode == Some(VirtualKeyCode::Escape) {
+                        control_flow.set_exit();
+                    }
+                    if input.virtual_keycode == Some(VirtualKeyCode::Space)
+                        && input.state == ElementState::Pressed
+                    {
+                        window.request_redraw();
+                    }
+                }
+                _ => {}
+            },
             _ => {}
         }
 
-        // println!("{:?}", event);
         if Instant::now()
             .duration_since(last_redraw_instant)
             .as_secs_f64()
@@ -75,17 +91,5 @@ fn main() {
             }
             last_redraw_instant = Instant::now();
         }
-
-        // if let Some(size) = input.window_resized() {
-        //     pixels.resize_surface(size.width, size.height).unwrap();
-        // }
-
-        // pixels.render().unwrap();
-        // pixels.render().unwrap();
-
-        // *control_flow = ControlFlow::Exit;
     });
-
-    // let bytes = include_bytes!("../data/2-ibm-logo.ch8");
-    // println!("{:x?}", bytes);
 }
