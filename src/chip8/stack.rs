@@ -17,9 +17,9 @@ impl Stack {
     }
 
     pub fn pop(&mut self) -> u16 {
+        self.index -= 1;
         let value = self.data[self.index];
         self.data[self.index] = 0;
-        self.index -= 1;
         value
     }
 }
