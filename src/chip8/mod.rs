@@ -2,7 +2,7 @@ mod stack;
 
 use stack::Stack;
 use std::cmp;
-use winit::event::{ScanCode, VirtualKeyCode};
+use winit::event::ScanCode;
 
 pub const WIDTH: usize = 64;
 pub const HEIGHT: usize = 32;
@@ -97,13 +97,6 @@ impl Chip8 {
         }
     }
 
-    fn fetch(&mut self) -> u16 {
-        let pc: usize = self.pc.into();
-        let instruction: u16 = ((self.memory[pc] as u16) << 8) | self.memory[pc + 1] as u16;
-        self.pc = self.pc + 2;
-        instruction
-    }
-
     /// Clear screen
     fn f00e0(&mut self) {
         self.display = [[0; WIDTH]; HEIGHT];
@@ -122,7 +115,7 @@ impl Chip8 {
 
     /// Call subroutine
     fn f2nnn(&mut self, nnn: u16) {
-        self.stack.push(nnn);
+        self.stack.push(self.pc);
         self.pc = nnn;
     }
 
@@ -319,8 +312,13 @@ impl Chip8 {
 
     /// The index register I will get the value in VX added to it.
     fn ffx1e(&mut self, x: u16) {
-        // TODO set vf if it overflows to 0x1000 range
-        self.i = self.i.wrapping_add(x);
+        self.i = self.i.wrapping_add(self.v[x as usize] as u16);
+        if self.i <= 0xFFF {
+            return;
+        }
+        if let Chip8Implementation::Modern = self.implementation {
+            self.v[0xf] = 1;
+        }
     }
 
     /// This instruction “blocks”; it stops executing instructions
@@ -354,7 +352,7 @@ impl Chip8 {
     /// V0 will be stored at the address in I, V1 will be stored in I + 1,
     /// and so on, until VX is stored in I + X
     fn ffx55(&mut self, x: u16) {
-        for i in 0..x {
+        for i in 0..=x {
             self.memory[i as usize] = self.v[i as usize];
         }
     }
@@ -362,9 +360,28 @@ impl Chip8 {
     /// Same as FX65, except that it takes the value stored at the memory addresses
     /// and loads them into the variable registers instead.
     fn ffx65(&mut self, x: u16) {
-        for i in 0..x {
+        for i in 0..=x {
             self.v[i as usize] = self.memory[i as usize];
         }
+    }
+
+    pub fn decrease_sound_timer(&mut self) {
+        if self.sound_timer > 0 {
+            self.sound_timer -= 1;
+        }
+    }
+
+    pub fn decrease_delay_timer(&mut self) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1;
+        }
+    }
+
+    fn fetch(&mut self) -> u16 {
+        let pc: usize = self.pc.into();
+        let instruction: u16 = ((self.memory[pc] as u16) << 8) | self.memory[pc + 1] as u16;
+        self.pc = self.pc + 2;
+        instruction
     }
 
     fn decode(&mut self, instruction: u16) -> bool {

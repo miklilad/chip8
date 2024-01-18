@@ -9,7 +9,6 @@ use winit::{
     event_loop::EventLoop,
     window::WindowBuilder,
 };
-use winit_input_helper::WinitInputHelper;
 
 use crate::chip8::{Chip8, HEIGHT, WIDTH};
 
@@ -21,18 +20,17 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let mut input = WinitInputHelper::new();
-
     let size = window.inner_size();
     let surface_texture = SurfaceTexture::new(size.width, size.height, &window);
     let mut pixels = Pixels::new(WIDTH as u32, HEIGHT as u32, surface_texture).unwrap();
 
     let mut last_redraw_instant = Instant::now();
+    let mut last_timer_instant = Instant::now();
 
-    const UPS: u32 = 10;
+    const UPS: u32 = 700;
     let time_step = 1.0 / (UPS as f64);
 
-    let rom = include_bytes!("../data/IBM_Logo.ch8");
+    let rom = include_bytes!("../data/test_opcode.ch8");
 
     let mut chip8 = Chip8::new(rom, chip8::Chip8Implementation::Modern);
 
@@ -90,6 +88,16 @@ fn main() {
                 window.request_redraw();
             }
             last_redraw_instant = Instant::now();
+        }
+
+        if Instant::now()
+            .duration_since(last_timer_instant)
+            .as_secs_f64()
+            > 1.0 / 60.0
+        {
+            chip8.decrease_delay_timer();
+            chip8.decrease_sound_timer();
+            last_timer_instant = Instant::now()
         }
     });
 }
